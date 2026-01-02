@@ -1,16 +1,19 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors'; 
-import authRoutes from './routes/auth.route.js';
 
 const app = new Hono();
 
-//Middleware
-app.use('*', cors({ 
-  origin: 'http://localhost:5173',
-  credentials: true 
-}));
+//setup CORS
+app.use(
+  '*',
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+  })
+);
 
-// Routes
-app.route('/api/auth', authRoutes);
+// test
+import authRoutes from './routes/test.route.js';
+app.route('/api/test', authRoutes);
 
 export default app;

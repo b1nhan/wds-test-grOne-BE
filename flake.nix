@@ -11,7 +11,7 @@
       systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
       perSystem = {pkgs, ...}: {
         devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [nodejs prisma-engines prisma openssl];
+          buildInputs = with pkgs; [nodejs prisma-engines prisma openssl mariadb.client];
 
           shellHook = ''
             export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig";

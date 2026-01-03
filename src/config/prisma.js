@@ -1,12 +1,10 @@
-import pkg from '@prisma/client';
-const { PrismaClient } = pkg;
-
-import mariadb from 'mariadb';
+import dotenv from "dotenv";
+dotenv.config();
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import fs from 'fs';
-
-// 1. Create the MariaDB Connection Pool
-const pool = mariadb.createPool({
+import pkg from '@prisma/client';
+const { PrismaClient } = pkg;
+const adapter = new PrismaMariaDb({
   host: process.env.HOST || '127.0.0.1', // Use 127.0.0.1 to avoid IPv6 issues
   port: parseInt(process.env.PORT) || 3306,
   user: process.env.DB_USER,      // Check your .env variable names
@@ -18,8 +16,5 @@ const pool = mariadb.createPool({
   connectionLimit: 10
 });
 
-// 2. Initialize the Adapter
-const adapter = new PrismaMariaDb(pool);
-
-// 3. Instantiate the Client with the Adapter
+// Instantiate the Client with the Adapter
 export const prisma = new PrismaClient({ adapter });

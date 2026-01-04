@@ -2,13 +2,24 @@ import * as productService from "../services/product.service.js";
 
 export const searchProducts = async (req, res) => {
     try {
-        const { search } = req.query;
+        const { search, priceMin, priceMax } = req.query;
         let products;
 
+        const filter = {};
         if (search) {
-            products = await productService.search(search);
-            // } else if (category) {
-            //     products = await productService.getByCategory(category);
+            filter.search = search;
+        }
+
+        if (priceMin !== undefined) {
+            filter.priceMin = parseFloat(priceMin);
+        }
+
+        if (priceMax !== undefined) {
+            filter.priceMax = parseFloat(priceMax);
+        }
+        
+        if (filter.search || filter.priceMin !== undefined || filter.priceMax !== undefined) {
+            products = await productService.searchWithFilter(filter);
         } else {
             products = await productService.getAll();
         }

@@ -1,4 +1,4 @@
-import * as productRepository from "../services/product.repository.js";
+import * as productRepository from "../repository/product.repository.js";
 
 export const getAll = async () => {
     try {
@@ -17,20 +17,40 @@ export const getAll = async () => {
     }
 };
 
-export const search = async (q) => {
-    // Input validation
-    if (!q || typeof q !== "string" || q.trim().length === 0) {
+export const searchWithFilter = async (filter) => {
+    // Filter: { search, priceMin, priceMax }
+    if (!filter || typeof filter !== "object") {
         return [];
     }
 
-    // Limit the length of the search string to prevent resource exhaustion
-    const searchTerm = q.trim().slice(0, 100);
-    
+    // Sanitize and validate inputs inside filter
+    const filterObject = {};
+
+    if (filter.search && typeof filter.search === "string" && filter.search.trim().length > 0) {
+        filterObject.search = filter.search.trim().slice(0, 100);
+    }
+
+    if (
+        filter.priceMin !== undefined &&
+        (typeof filter.priceMin === "number" || !isNaN(Number(filter.priceMin)))
+    ) {
+        filterObject.priceMin = Number(filter.priceMin);
+    }
+
+    if (
+        filter.priceMax !== undefined &&
+        (typeof filter.priceMax === "number" || !isNaN(Number(filter.priceMax)))
+    ) {
+        filterObject.priceMax = Number(filter.priceMax);
+    }
+
     try {
-        const products = await productRepository.search(searchTerm);
+        const products = await productRepository.searchWithFilter(filterObject);
         return products;
     } catch (error) {
-        console.log(error);
-        throw new Error(`Unable to retrieve products with keyword ${searchTerm}`);
+        console.error(error);
+        throw new Error(
+            `Unable to retrieve products with filter: ${JSON.stringify(filterObject)}`
+        );
     }
 }

@@ -34,7 +34,8 @@ app.use("*", async (c, next) => {
 // test
 app.route("/api/test", authRoutes);
 
-app.use("/api", router);
+// API v1 - use route() instead of use() for proper mounting
+app.route("/api/v1", router);
 
 app.get("/", (c) => c.text("hi"));
 

@@ -8,34 +8,27 @@ const app = new Hono();
 // Setup CORS
 const allowedOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (e.g., curl, mobile apps, server-to-server)
-    if (!origin) {
-      callback(null, true);
-    } else if (allowedOrigins.includes(origin)) {
-      callback(null, origin); // allow only the requesting origin
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization"
-  ],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 200,
-};
+app.use(
+  "*",
+  cors({
+    origin: (origin) => {
+      // Allow requests with no origin (e.g., curl, mobile apps, server-to-server)
+      if (!origin) return "*";
+      if (allowedOrigins.includes(origin)) {
+        return origin;
+      }
+      return null; // Block other origins
+    },
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
-app.options("*", cors(corsOptions));
-app.use(cors(corsOptions));
-
-// Logger to debug
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-  next();
+// Logger middleware
+app.use("*", async (c, next) => {
+  console.log(`[${new Date().toISOString()}] ${c.req.method} ${c.req.path}`);
+  await next();
 });
 
 // test

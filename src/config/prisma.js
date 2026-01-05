@@ -23,3 +23,6 @@ const adapter = new PrismaMariaDb({
 
 // 3. Instantiate the Client with the Adapter
 export const prisma = new PrismaClient({ adapter });
+
+
+

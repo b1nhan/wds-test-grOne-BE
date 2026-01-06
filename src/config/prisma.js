@@ -14,11 +14,11 @@ const adapter = new PrismaMariaDb({
   user: process.env.DB_USERNAME, 
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  ssl: {
-    ca: fs.readFileSync('./ca.pem'),
-    rejectUnauthorized: false,
-  },
-  connectionLimit: 10,
+  // ssl: {
+  //   ca: fs.readFileSync('./ca.pem'),
+  //   rejectUnauthorized: false,
+  // },
+  connectionLimit: 20,
 });
 
 // 3. Instantiate the Client with the Adapter

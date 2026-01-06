@@ -5,7 +5,13 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "seed": "node prisma/seed.js",
+    "clear-products": "node prisma/clear-products.js",
+    "studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "keywords": [],
   "author": "",

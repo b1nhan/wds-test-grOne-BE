@@ -19,7 +19,7 @@ export const getProducts = async (c) => {
             keyword,
             minPrice: minPrice ? parseInt(minPrice) : undefined,
             maxPrice: maxPrice ? parseInt(maxPrice) : undefined,
-            sort,
+            sort, // price_desc || price_asc
             limit: parseInt(limit),
             page: parseInt(page),
         };

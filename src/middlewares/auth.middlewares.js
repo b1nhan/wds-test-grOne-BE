@@ -1,4 +1,3 @@
-// file tạm nha
 import jwt from 'jsonwebtoken';
 
 export const verifyToken = (req, res, next) => {
@@ -8,3 +7,8 @@ export const verifyToken = (req, res, next) => {
   req.user = jwt.verify(token, process.env.JWT_SECRET);
   next();
 };
+
+export const verifyAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+  next();
+}

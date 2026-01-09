@@ -1,14 +1,17 @@
-import { LoginRequestDTO } from "../DTOs/request/auth/login-request.dto";
-import { RegisterRequestDTO } from "../DTOs/request/auth/register-request.dto";
-import * as authService from "../services/auth.service";
-import { JwtHandler } from "../utils/jwt-handler";
+import { LoginRequestDTO } from "../DTOs/request/auth/login-request.dto.js";
+import { RegisterRequestDTO } from "../DTOs/request/auth/register-request.dto.js";
+import * as authService from "../services/auth.service.js";
+import { JwtHandler } from "../utils/jwt-handler.js";
+import { setCookie, deleteCookie } from "hono/cookie";
+import { z } from "zod";
 
-export const login = async (req, res) => {
+export const login = async (c) => {
     try {
-        const validation = LoginRequestDTO.safeParse(req.body);
+        const body = await c.req.json();
+        const validation = LoginRequestDTO.safeParse(body);
 
         if (!validation.success) {
-            return res.status(400).json(z.treeifyError(validation.error));
+            return c.json(z(validation.error), 400);
         }
 
         const {
@@ -20,37 +23,40 @@ export const login = async (req, res) => {
         const user = await authService.login(email, password);
 
         // Check if the user is logged in
-        const EXPIRY_LONG = 60 * 60 * 24 * 30;
-        const EXPIRY_SHORT = 60 * 60;
+        const EXPIRY_LONG = 60 * 60 * 24 * 30; // 30 days in seconds
+        const EXPIRY_SHORT = 60 * 60;          // 1 hour in seconds
         const expirySeconds = rememberMe ? EXPIRY_LONG : EXPIRY_SHORT;
 
         const jwt = JwtHandler.generateToken(user, expirySeconds);
 
-        res.cookie("accessToken", jwt, {
-            maxAge: expirySeconds * 1000,
+        //tính bằng SECONDS (giây) thay cho MS
+        setCookie(c, "accessToken", jwt, {
+            maxAge: expirySeconds,
             httpOnly: true,
             secure: true,
-            sameSite: 'strict',
+            sameSite: 'Strict',
             path: '/',
         });
 
-        return res.status(200).json({
+        return c.json({
             message: "Logged in successfully.",
             role: user.role,
             token: jwt,
-        });
+        }, 200);
+
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: "Internal server error." });
+        return c.json({ message: "Internal server error." }, 500);
     }
 }
 
-export const register = async (req, res) => {
+export const register = async (c) => {
     try {
-        const validation = RegisterRequestDTO.safeParse(req.body);
+        const body = await c.req.json();
+        const validation = RegisterRequestDTO.safeParse(body);
 
         if (!validation.success) {
-            return res.status(400).json(z.treeifyError(validation.error));
+            return c.json(z(validation.error), 400);
         }
 
         const {
@@ -62,47 +68,53 @@ export const register = async (req, res) => {
 
         const user = await authService.register(full_name, email, password, phone);
 
-        return res.status(201).json({
+        return c.json({
             message: "User registered successfully.",
             user,
-        });
+        }, 201);
+
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ message: "Internal server error." });
+        return c.json({ message: "Internal server error." }, 500);
     }
 }
 
-export const logout = async (_, res) => {
+export const logout = async (c) => {
     try {
-        res.clearCookie("accessToken", {
+        deleteCookie(c, "accessToken", {
             httpOnly: true,
             secure: true,
-            sameSite: 'strict',
+            sameSite: 'Strict',
             path: '/',
         });
 
-        return res.status(200).json({
+        return c.json({
             message: "Logged out successfully."
-        });
+        }, 200);
+
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: "Internal server error." });
+        return c.json({ message: "Internal server error." }, 500);
     }
 }
 
-export const me = async (req, res) => {
+export const me = async (c) => {
     try {
-        // const token = req.cookies.accessToken;
-        const token = req.headers.authorization;
+        const authHeader = c.req.header('Authorization');
 
-        if (!token) {
-            return res.status(401).json({ message: "Unauthorized." });
+        if (!authHeader) {
+            return c.json({ message: "Unauthorized." }, 401);
         }
 
+        // remove "Bearer"
+        const token = authHeader.startsWith('Bearer ') 
+            ? authHeader.split(' ')[1] 
+            : authHeader;
+        
         const user = JwtHandler.validateToken(token);
-        return res.status(200).json(user);
+        return c.json(user, 200);
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: "Internal server error." });
+        return c.json({ message: "Internal server error." }, 500);
     }
 }

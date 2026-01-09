@@ -19,7 +19,7 @@ export const login = async (email, password) => {
 };
 
 export const register = async (
-    full_name,
+    fullName,
     email,
     password,
     phone
@@ -32,7 +32,7 @@ export const register = async (
     const hashedPassword = bcrypt.hashSync(password, 13);
 
     const user = await userRepository.create({
-        full_name,
+        fullName,
         email,
         password: hashedPassword,
         phone,

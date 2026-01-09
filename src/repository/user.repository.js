@@ -22,14 +22,15 @@ export const getOne = async (criteria, value) => {
 export const create = async (user) => {
     // Assumes function signature is: create = async (user) => { ... }
     try {
-        const name = user.full_name;
+        const name = user.fullName;
         const email = user.email;
-        const role = "user"; // User only (1)
+        const role = "USER"; // User only (1)
         const password = user.password;
+        const phone = user.phone;
 
         const newUser = await prisma.user.create({
             data: {
-                full_name: name,
+                fullName: name,
                 email,
                 password,
                 phone,
@@ -39,6 +40,7 @@ export const create = async (user) => {
 
         return newUser.id;
     } catch (err) {
+        console.log ("Error:", err);
         throw new Error("Cannot create new user. Please try again.");
     }
 }

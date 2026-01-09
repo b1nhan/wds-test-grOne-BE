@@ -10,9 +10,9 @@ router.get("/test", (c) => {
 });
 
 
-router.use("/auth", authRouter);
+router.route("/auth", authRouter);
 
 // Product routes
-router.use("/products", productRouter);
+router.route("/products", productRouter);
 
 export default router;

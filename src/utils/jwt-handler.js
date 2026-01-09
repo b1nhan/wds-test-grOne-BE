@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import jwt from 'jsonwebtoken';
 
 export class JwtHandler {
@@ -19,14 +22,13 @@ export class JwtHandler {
     static generateToken(user, expireTime = 3600) {
         const issuedAt = Math.floor(Date.now() / 1000);
         const expirationTime = issuedAt + expireTime;
-
         const payload = {
             iss: process.env.HOST || 'localhost',
-            sub: user.user_id,
+            sub: user.id,
             aud: process.env.HOST || 'localhost',
             iat: issuedAt,
             exp: expirationTime,
-            fullname: user.full_name,
+            fullname: user.fullName,
             email: user.email,
             role: user.role
         };
@@ -43,7 +45,6 @@ export class JwtHandler {
     static validateToken(token) {
         try {
             const decoded = jwt.verify(token, this.getSecretKey(), { algorithms: [this.encrAlgos[0]] });
-
             const requiredClaimsExist =
                 decoded.sub &&
                 decoded.email &&
@@ -56,7 +57,7 @@ export class JwtHandler {
             return {
                 id: decoded.sub,
                 email: decoded.email,
-                name: decoded.name ?? null,
+                name: decoded.fullname ?? null,
                 role: decoded.role ?? "user"
             };
         } catch (err) {

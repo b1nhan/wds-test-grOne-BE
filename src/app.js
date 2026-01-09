@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import authRoutes from "./routes/test.route.js";
+import testRoute from "./routes/test.route.js";
 import router from "./routes/routes.js";
 
 const app = new Hono();
@@ -32,7 +32,7 @@ app.use("*", async (c, next) => {
 });
 
 // test
-app.route("/api/test", authRoutes);
+app.route("/api/test", testRoute);
 
 // API v1 - use route() instead of use() for proper mounting
 app.route("/api/v1", router);

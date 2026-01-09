@@ -7,28 +7,24 @@ import {
     deleteProduct
 } from "../controllers/product.controller.js";
 // import { verifyToken } from "../middlewares/auth.middlewares.js";
+import { authMiddleware, adminMiddleware } from "../middlewares/auth.middlewares.js";
 
-const productRoutes = new Hono();
+
+const productRouter = new Hono();
 
 // GET /products - Lấy danh sách sản phẩm (public)
-productRoutes.get("/", getProducts);
+productRouter.get("/", getProducts);
 
 // GET /products/:id - Lấy chi tiết sản phẩm (public)
-productRoutes.get("/:id", getProductById);
+productRouter.get("/:id", getProductById);
 
 // POST /products - Tạo sản phẩm mới (Admin only)
-// TODO: Uncomment khi đã có middleware auth
-// productRoutes.post("/", verifyToken, createProduct);
-productRoutes.post("/", createProduct);
+productRouter.post("/", authMiddleware, adminMiddleware, createProduct);
 
 // PUT /products/:id - Cập nhật sản phẩm (Admin only)
-// TODO: Uncomment khi đã có middleware auth
-// productRoutes.put("/:id", verifyToken, updateProduct);
-productRoutes.put("/:id", updateProduct);
+productRouter.put("/:id", authMiddleware, adminMiddleware, updateProduct);
 
 // DELETE /products/:id - Xóa sản phẩm (Admin only)
-// TODO: Uncomment khi đã có middleware auth
-// productRoutes.delete("/:id", verifyToken, deleteProduct);
-productRoutes.delete("/:id", deleteProduct);
+productRouter.delete("/:id", authMiddleware, adminMiddleware, deleteProduct);
 
-export { productRoutes };
+export { productRouter };

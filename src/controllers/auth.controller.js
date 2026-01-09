@@ -56,7 +56,7 @@ export const register = async (c) => {
         const validation = RegisterRequestDTO.safeParse(body);
 
         if (!validation.success) {
-            return c.json(z(validation.error), 400);
+            return c.json(z.treeifyError(validation.error), 400);
         }
 
         const {

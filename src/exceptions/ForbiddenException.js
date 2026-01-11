@@ -1,4 +1,4 @@
-import { Exception } from "./Exception";
+import { Exception } from "./Exception.js";
 
 export class ForbiddenException extends Exception {
     constructor(message = "Forbidden", status = 403) {

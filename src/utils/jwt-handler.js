@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import jwt from "jsonwebtoken";
-import { UnauthorizedException } from "../exceptions/UnauthorizedExeption";
+import { UnauthorizedException } from "../exceptions/UnauthorizedExeption.js";
 
 export class JwtHandler {
     static encrAlgos = ["HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "ES256", "ES384", "none"];

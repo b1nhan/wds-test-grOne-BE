@@ -1,13 +1,11 @@
 import { Exception } from "./Exception";
 
-export class NotFoundException extends Exception {
-    public status: number;
-
-    constructor(message: string = "Not Found", status: number = 404) {
+export class ForbiddenException extends Exception {
+    constructor(message = "Forbidden", status = 403) {
         super(message, status);
-        this.name = "NotFoundException";
+        this.name = "ForbiddenException";
         this.status = status;
-        Object.setPrototypeOf(this, NotFoundException.prototype);
+        Object.setPrototypeOf(this, ForbiddenException.prototype);
 
         // Maintaining proper stack trace (only on V8)
         if (typeof Error.captureStackTrace === 'function') {

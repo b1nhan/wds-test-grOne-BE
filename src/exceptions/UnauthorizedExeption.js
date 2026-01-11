@@ -1,9 +1,7 @@
 import { Exception } from "./Exception";
 
 export class UnauthorizedException extends Exception {
-    public status: number;
-
-    constructor(message: string = "Unauthorized", status: number = 401) {
+    constructor(message = "Unauthorized", status = 401) {
         super(message, status);
         this.name = "UnauthorizedException";
         this.status = status;
@@ -15,3 +13,4 @@ export class UnauthorizedException extends Exception {
         }
     }
 }
+

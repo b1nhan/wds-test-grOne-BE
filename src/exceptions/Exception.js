@@ -1,9 +1,5 @@
 export class Exception extends Error {
-    public status: number;
-    public details: any;
-    public isOperational: boolean;
-
-    constructor(message: string, status = 500, details: any = null) {
+    constructor(message, status = 500, details = null) {
         super(message);
         this.status = status;
         this.name = this.constructor.name;

@@ -1,9 +1,7 @@
 import { Exception } from "./Exception";
 
 export class BadRequestException extends Exception {
-    public status: number;
-
-    constructor(message: string = "Bad Request", status: number = 400) {
+    constructor(message = "Bad Request", status = 400) {
         super(message, status);
         this.name = "BadRequestException";
         this.status = status;

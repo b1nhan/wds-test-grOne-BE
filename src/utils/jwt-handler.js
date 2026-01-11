@@ -1,7 +1,8 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
+import { UnauthorizedException } from "../exceptions/UnauthorizedExeption";
 
 export class JwtHandler {
     static encrAlgos = ["HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "ES256", "ES384", "none"];
@@ -10,7 +11,7 @@ export class JwtHandler {
         const key = process.env.JWT_SECRET_KEY;
         if (!key) {
             // Throw error as runtime/config error
-            throw new Error("JWT_SECRET_KEY is missing or empty in environment configuration.");
+            throw new ReferenceError("JWT_SECRET_KEY is missing or empty in environment configuration.");
         }
         return key;
     }
@@ -23,9 +24,9 @@ export class JwtHandler {
         const issuedAt = Math.floor(Date.now() / 1000);
         const expirationTime = issuedAt + expireTime;
         const payload = {
-            iss: process.env.HOST || 'localhost',
+            iss: process.env.HOST || "localhost",
             sub: user.id,
-            aud: process.env.HOST || 'localhost',
+            aud: process.env.HOST || "localhost",
             iat: issuedAt,
             exp: expirationTime,
             fullname: user.fullName,
@@ -61,9 +62,7 @@ export class JwtHandler {
                 role: decoded.role ?? "user"
             };
         } catch (err) {
-            const unauthorizedError = new Error("Token validation failed: " + err.message);
-            unauthorizedError.statusCode = 401;
-            throw unauthorizedError;
+            throw new UnauthorizedException("Token validation failed: " + err.message);
         }
     }
 }

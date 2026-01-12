@@ -47,7 +47,8 @@ export const adminMiddleware = async (c, next) => {
     );
   }
 
-  if (user.role !== "ADMIN") {
+  const userRole = user.role?.toLowerCase();
+  if (userRole !== "admin") {
     return c.json(
       {
         success: false,

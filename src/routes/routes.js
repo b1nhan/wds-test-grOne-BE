@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { productRouter } from "./product.route.js";
 import { authRouter } from "./auth.route.js";
+import { orderRouter } from "./order.route.js";
+import { cartRouter } from "./cart.route.js";
 
 const router = new Hono();
 
@@ -14,5 +16,11 @@ router.route("/auth", authRouter);
 
 // Product routes
 router.route("/products", productRouter);
+
+// Cart routes
+router.route("/cart", cartRouter);
+
+// Order routes
+router.route("/orders", orderRouter);
 
 export default router;

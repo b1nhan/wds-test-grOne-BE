@@ -2,7 +2,7 @@ import { LoginRequestDTO } from "../DTOs/request/auth/login-request.dto.js";
 import { RegisterRequestDTO } from "../DTOs/request/auth/register-request.dto.js";
 import * as authService from "../services/auth.service.js";
 import { JwtHandler } from "../utils/jwt-handler.js";
-import { setCookie, deleteCookie } from "hono/cookie";
+import { setCookie } from "hono/cookie";
 import { z } from "zod";
 
 export const login = async (c) => {
@@ -55,7 +55,7 @@ export const login = async (c) => {
             success: false,
             message,
             statusCode: error.status || 500
-        }, error.status);
+        }, error.status || 500);
     }
 }
 
@@ -83,29 +83,14 @@ export const register = async (c) => {
             data: user,
         }, 201);
     } catch (error) {
-        console.log(error);
-        return c.json({ message: "Internal server error." }, 500);
+        console.error(error);
+        return c.json({
+            success: false,
+            message: error.message || "Internal server error.",
+            statusCode: error.status || 500
+        }, error.status || 500);
     }
 }
-
-// export const logout = async (c) => {
-//     try {
-//         deleteCookie(c, "accessToken", {
-//             httpOnly: true,
-//             secure: true,
-//             sameSite: 'Strict',
-//             path: '/',
-//         });
-
-//         return c.json({
-//             message: "Logged out successfully."
-//         }, 200);
-
-//     } catch (error) {
-//         console.error(error);
-//         return c.json({ message: "Internal server error." }, 500);
-//     }
-// }
 
 export const me = async (c) => {
     try {
@@ -121,9 +106,17 @@ export const me = async (c) => {
             : authHeader;
 
         const user = JwtHandler.validateToken(token);
-        return c.json(user, 200);
+        return c.json({
+            success: true,
+            message: "Lấy thông tin profile thành công",
+            data: user
+        }, 200);
     } catch (error) {
         console.error(error);
-        return c.json({ message: "Internal server error." }, 500);
+        return c.json({
+            success: false,
+            message: error.message || "Internal server error.",
+            statusCode: error.status || 500
+        }, error.status || 500);
     }
 }

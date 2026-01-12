@@ -1,12 +1,6 @@
 import { Hono } from "hono";
-import { 
-    login,
-    // logout,
-    me, 
-    register 
-    } from "../controllers/auth.controller.js";
+import { login, me, register } from "../controllers/auth.controller.js";
 import { authMiddleware } from "../middlewares/auth.middlewares.js";
-
 
 const authRouter = new Hono();
 

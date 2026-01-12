@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 export const login = async (email, password) => {
     const user = await userRepository.getOne("email", email);
 
-    if (!user || !bcrypt.compare(password, user.password)) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
         throw new BadRequestException("Invalid credentials.");
     }
 

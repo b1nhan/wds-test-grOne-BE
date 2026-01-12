@@ -7,7 +7,6 @@ import { mapProductToResponse, mapProductsToResponse } from "../utils/product.ma
  */
 export const getProducts = async (c) => {
     try {
-        console.log("getProducts controller called");
         const keyword = c.req.query("keyword");
         const minPrice = c.req.query("minPrice");
         const maxPrice = c.req.query("maxPrice");
@@ -24,9 +23,7 @@ export const getProducts = async (c) => {
             page: parseInt(page),
         };
 
-        console.log("Calling productService.getProducts with options:", options);
         const result = await productService.getProducts(options);
-        console.log("Service returned:", result);
 
         return c.json({
             success: true,
@@ -38,7 +35,6 @@ export const getProducts = async (c) => {
         }, 200);
     } catch (error) {
         console.error("Error in getProducts:", error);
-        console.error("Error stack:", error.stack);
         return c.json({ 
             success: false,
             message: "Có lỗi xảy ra khi lấy danh sách sản phẩm",

@@ -13,7 +13,6 @@ export const authMiddleware = async (c, next) => {
     }
 
     const token = authHeader.split(" ")[1];
-    console.log("token", token)
     const user = JwtHandler.validateToken(token);
 
     c.set("user", user);
@@ -40,7 +39,9 @@ export const adminMiddleware = async (c, next) => {
   }
 
 
-  if (user.role !== "admin") {
+  // Normalize role comparison (handle both "admin"/"ADMIN" and "user"/"USER")
+  const userRole = user.role?.toLowerCase();
+  if (userRole !== "admin") {
     return c.json({
       success: false,
       message: "Forbidden: Admin access required",

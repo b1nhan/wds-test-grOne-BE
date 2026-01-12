@@ -1,4 +1,4 @@
-import { Exception } from "./Exception";
+import { Exception } from "./Exception.js";
 
 export class UnauthorizedException extends Exception {
     constructor(message = "Unauthorized", status = 401) {

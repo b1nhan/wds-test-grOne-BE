@@ -10,8 +10,6 @@
     "clear-products": "node prisma/clear-products.js",
     "studio": "prisma studio",
     "build": "prisma generate && npm run build:server"
-}
-
   },
   "prisma": {
     "seed": "node prisma/seed.js"

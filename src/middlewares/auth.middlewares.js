@@ -5,11 +5,14 @@ export const authMiddleware = async (c, next) => {
     const authHeader = c.req.header("Authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return c.json({
-        success: false,
-        message: "Missing or invalid Authorization header",
-        statusCode: 401
-      }, 401);
+      return c.json(
+        {
+          success: false,
+          message: "Missing or invalid Authorization header",
+          statusCode: 401,
+        },
+        401
+      );
     }
 
     const token = authHeader.split(" ")[1];
@@ -19,11 +22,14 @@ export const authMiddleware = async (c, next) => {
 
     await next();
   } catch (err) {
-    return c.json({
-      success: false,
-      message: "Unauthorized: " + err.message,
-      statusCode: 401
-    }, 401);
+    return c.json(
+      {
+        success: false,
+        message: "Unauthorized: " + err.message,
+        statusCode: 401,
+      },
+      401
+    );
   }
 };
 
@@ -31,20 +37,26 @@ export const adminMiddleware = async (c, next) => {
   const user = c.get("user");
 
   if (!user) {
-    return c.json({
-      success: false,
-      message: "Unauthorized: Login required",
-      statusCode: 401
-    }, 401);
+    return c.json(
+      {
+        success: false,
+        message: "Unauthorized: Login required",
+        statusCode: 401,
+      },
+      401
+    );
   }
 
-
-  if (user.role !== "ADMIN") {
-    return c.json({
-      success: false,
-      message: "Forbidden: Admin access required",
-      statusCode: 403
-    }, 403);
+  const userRole = user.role?.toLowerCase();
+  if (userRole !== "admin") {
+    return c.json(
+      {
+        success: false,
+        message: "Forbidden: Admin access required",
+        statusCode: 403,
+      },
+      403
+    );
   }
 
   await next();

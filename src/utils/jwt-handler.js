@@ -55,11 +55,14 @@ export class JwtHandler {
                 throw new Error("Token is missing required claims.");
             }
 
+            // Normalize role to lowercase for consistency
+            const role = decoded.role ? String(decoded.role).toLowerCase() : "user";
+            
             return {
                 id: decoded.sub,
                 email: decoded.email,
                 name: decoded.fullname ?? null,
-                role: decoded.role ?? "user"
+                role: role
             };
         } catch (err) {
             throw new UnauthorizedException("Token validation failed: " + err.message);

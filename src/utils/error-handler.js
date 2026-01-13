@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { success } from "zod";
+import { Exception } from "../exceptions/Exception.js";
 
 /**
  * A simple global error handler.
@@ -153,9 +153,6 @@ export class ErrorHandler {
     }
 }
 
-export function notFoundHandler(
-    c,
-    next
-) {
+export function notFoundHandler(c, next) {
     next(new Exception(`Route not found: ${c.req.method} ${c.req.path}`, 404));
 }

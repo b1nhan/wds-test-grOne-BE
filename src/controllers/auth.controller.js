@@ -11,7 +11,7 @@ export const login = async (c) => {
         const validation = LoginRequestDTO.safeParse(body);
 
         if (!validation.success) {
-            return c.json(z(validation.error), 400);
+            return c.json(z.treeifyError(validation.error), 400);
         }
 
         const {
@@ -39,14 +39,23 @@ export const login = async (c) => {
         });
 
         return c.json({
-            message: "Logged in successfully.",
-            role: user.role,
-            token: jwt,
+            success: true,
+            message: "Thao tác thành công",
+            data: {
+                role: user.role,
+                token: jwt,
+            }
         }, 200);
-
     } catch (error) {
         console.error(error);
-        return c.json({ message: "Internal server error." }, 500);
+
+        const message = error.message || "Internal server error.";
+
+        return c.json({
+            success: false,
+            message,
+            statusCode: error.status || 500
+        }, error.status);
     }
 }
 
@@ -69,48 +78,48 @@ export const register = async (c) => {
         const user = await authService.register(full_name, email, password, phone);
 
         return c.json({
+            success: true,
             message: "User registered successfully.",
-            user,
+            data: user,
         }, 201);
-
     } catch (error) {
         console.log(error);
         return c.json({ message: "Internal server error." }, 500);
     }
 }
 
-export const logout = async (c) => {
-    try {
-        deleteCookie(c, "accessToken", {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'Strict',
-            path: '/',
-        });
+// export const logout = async (c) => {
+//     try {
+//         deleteCookie(c, "accessToken", {
+//             httpOnly: true,
+//             secure: true,
+//             sameSite: 'Strict',
+//             path: '/',
+//         });
 
-        return c.json({
-            message: "Logged out successfully."
-        }, 200);
+//         return c.json({
+//             message: "Logged out successfully."
+//         }, 200);
 
-    } catch (error) {
-        console.error(error);
-        return c.json({ message: "Internal server error." }, 500);
-    }
-}
+//     } catch (error) {
+//         console.error(error);
+//         return c.json({ message: "Internal server error." }, 500);
+//     }
+// }
 
 export const me = async (c) => {
     try {
-        const authHeader = c.req.header('Authorization');
+        const authHeader = c.req.header('Authorization') || c.req.header('authorization');
 
         if (!authHeader) {
             return c.json({ message: "Unauthorized." }, 401);
         }
 
         // remove "Bearer"
-        const token = authHeader.startsWith('Bearer ') 
-            ? authHeader.split(' ')[1] 
+        const token = authHeader.startsWith('Bearer ')
+            ? authHeader.split(' ')[1]
             : authHeader;
-        
+
         const user = JwtHandler.validateToken(token);
         return c.json(user, 200);
     } catch (error) {

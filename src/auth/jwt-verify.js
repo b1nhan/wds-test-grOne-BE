@@ -18,8 +18,8 @@ export class JwtVerify {
     }
 
     static getBearerToken(req) {
-        let authHeader = req.headers['authorization'] || req.headers['Authorization'];
-        if (authHeader && typeof authHeader === 'string') {
+        let authHeader = req.headers["authorization"] || req.headers["Authorization"];
+        if (authHeader && typeof authHeader === "string") {
             const match = authHeader.match(/Bearer\s+(\S+)/);
             if (match) {
                 return match[1];

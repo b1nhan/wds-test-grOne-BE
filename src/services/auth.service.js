@@ -1,3 +1,4 @@
+import { BadRequestException } from "../exceptions/BadRequestException.js";
 import * as userRepository from "../repository/user.repository.js";
 import bcrypt from "bcrypt";
 
@@ -5,7 +6,7 @@ export const login = async (email, password) => {
     const user = await userRepository.getOne("email", email);
 
     if (!user || !bcrypt.compare(password, user.password)) {
-        throw new Error("Invalid credentials.");
+        throw new BadRequestException("Invalid credentials.");
     }
 
     // Fire and forget
@@ -26,7 +27,7 @@ export const register = async (
 ) => {
     const existingUser = await userRepository.getOne("email", email);
     if (existingUser) {
-        throw new Error("User already exists.");
+        throw new BadRequestException("User already exists.");
     }
 
     const hashedPassword = bcrypt.hashSync(password, 13);

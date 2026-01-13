@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import testRoute from "./routes/test.route.js";
 import router from "./routes/routes.js";
+import { ErrorHandler, notFoundHandler } from "./utils/error-handler.js";
 
 const app = new Hono();
 
@@ -38,6 +39,9 @@ app.route("/api/test", testRoute);
 app.route("/api/v1", router);
 
 app.get("/", (c) => c.text("hi"));
+
+app.use(notFoundHandler);
+app.use(ErrorHandler.handleException);
 
 export default app;
 

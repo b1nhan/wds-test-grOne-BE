@@ -7,7 +7,11 @@ import { ErrorHandler, notFoundHandler } from "./utils/error-handler.js";
 const app = new Hono();
 
 // Setup CORS
-const allowedOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://wds-test-gr-one.vercel.app",
+];
 
 app.use(
   "*",
@@ -44,4 +48,3 @@ app.use(notFoundHandler);
 app.use(ErrorHandler.handleException);
 
 export default app;
-

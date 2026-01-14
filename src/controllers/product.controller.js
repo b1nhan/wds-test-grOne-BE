@@ -1,3 +1,4 @@
+import { ConflictException } from "../exceptions/ConflictException.js";
 import * as productService from "../services/product.service.js";
 import { mapProductToResponse, mapProductsToResponse } from "../utils/product.mapper.js";
 
@@ -35,7 +36,7 @@ export const getProducts = async (c) => {
         }, 200);
     } catch (error) {
         console.error("Error in getProducts:", error);
-        return c.json({ 
+        return c.json({
             success: false,
             message: "Có lỗi xảy ra khi lấy danh sách sản phẩm",
             statusCode: 500
@@ -50,7 +51,7 @@ export const getProducts = async (c) => {
 export const getProductById = async (c) => {
     try {
         const id = c.req.param("id");
-        
+
         // Validate ID
         if (!id || isNaN(Number(id))) {
             return c.json({
@@ -77,7 +78,7 @@ export const getProductById = async (c) => {
         }, 200);
     } catch (error) {
         console.error("Error in getProductById:", error);
-        return c.json({ 
+        return c.json({
             success: false,
             message: "Có lỗi xảy ra khi lấy thông tin sản phẩm",
             statusCode: 500
@@ -111,6 +112,15 @@ export const createProduct = async (c) => {
         }, 201);
     } catch (error) {
         console.error("Error in createProduct:", error);
+
+        if (error instanceof ConflictException) {
+            return c.json({
+                success: false,
+                message: error.message,
+                statusCode: error.status
+            }, error.status);
+        }
+
         return c.json({
             success: false,
             message: error.message || "Có lỗi xảy ra khi tạo sản phẩm",
@@ -146,7 +156,7 @@ export const updateProduct = async (c) => {
         }, 200);
     } catch (error) {
         console.error("Error in updateProduct:", error);
-        
+
         if (error.message === "Product not found") {
             return c.json({
                 success: false,
@@ -188,7 +198,7 @@ export const deleteProduct = async (c) => {
         }, 200);
     } catch (error) {
         console.error("Error in deleteProduct:", error);
-        
+
         if (error.message === "Product not found") {
             return c.json({
                 success: false,

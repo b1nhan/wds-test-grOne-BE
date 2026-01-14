@@ -37,7 +37,7 @@ export const addItem = async (userId, productId, quantity) => {
             throw new Error("Sản phẩm này hiện đang hết hàng");
         }
 
-        // Get current cart item quantity (if exists)
+        // Get current cart and check if the item already exists
         const cart = await cartRepository.getOrCreateCart(userId);
         const existingItem = await prisma.cartItem.findFirst({
             where: {
@@ -47,7 +47,7 @@ export const addItem = async (userId, productId, quantity) => {
         });
 
         // Check if adding this quantity would exceed stock
-        const newQuantity = existingItem 
+        const newQuantity = existingItem
             ? existingItem.quantity + Number(quantity)
             : Number(quantity);
 
@@ -55,8 +55,14 @@ export const addItem = async (userId, productId, quantity) => {
             throw new Error("Số lượng sản phẩm trong giỏ hàng vượt quá số lượng tồn kho");
         }
 
-        // Add item to cart
-        const items = await cartRepository.addItem(userId, productId, quantity);
+        let items;
+        if (existingItem) {
+            // If item exists, update the quantity (not create new item)
+            items = await cartRepository.updateItem(userId, productId, newQuantity);
+        } else {
+            items = await cartRepository.addItem(userId, productId, quantity);
+        }
+
         return items;
     } catch (error) {
         console.error("Failed to add item to cart:", error);

@@ -1,16 +1,25 @@
 import * as cartRepository from "../repository/cart.repository.js";
 import * as productRepository from "../repository/product.repository.js";
-import { prisma } from "../config/prisma.js";
 
 /**
  * Get cart items for user
  * @param {Number} userId - User ID
- * @returns {Array} Cart items
+ * @returns {Object} { items: Array, removedProducts: Array, messages: Array } - Cart items and messages about removed products
  */
 export const getCartItems = async (userId) => {
     try {
-        const items = await cartRepository.getCartItems(userId);
-        return items;
+        const result = await cartRepository.getCartItems(userId);
+        
+        // Generate messages for removed products
+        const messages = result.removedProducts.map(productName => 
+            `Sản phẩm "${productName}" đã không còn nữa`
+        );
+        
+        return {
+            items: result.items,
+            removedProducts: result.removedProducts,
+            messages
+        };
     } catch (error) {
         console.error("Failed to fetch cart items:", error);
         throw error;
@@ -39,12 +48,7 @@ export const addItem = async (userId, productId, quantity) => {
 
         // Get current cart item quantity (if exists)
         const cart = await cartRepository.getOrCreateCart(userId);
-        const existingItem = await prisma.cartItem.findFirst({
-            where: {
-                cartId: cart.id,
-                productId: Number(productId)
-            }
-        });
+        const existingItem = await cartRepository.findCartItem(cart.id, productId);
 
         // Check if adding this quantity would exceed stock
         const newQuantity = existingItem 
@@ -56,8 +60,9 @@ export const addItem = async (userId, productId, quantity) => {
         }
 
         // Add item to cart
-        const items = await cartRepository.addItem(userId, productId, quantity);
-        return items;
+        const result = await cartRepository.addItem(userId, productId, quantity);
+        // Return only items, not messages (addItem already calls getCartItems which handles cleanup)
+        return result.items || result;
     } catch (error) {
         console.error("Failed to add item to cart:", error);
         throw error;
@@ -89,8 +94,9 @@ export const updateItem = async (userId, productId, quantity) => {
         }
 
         // Update item
-        const items = await cartRepository.updateItem(userId, productId, quantity);
-        return items;
+        const result = await cartRepository.updateItem(userId, productId, quantity);
+        // Return only items, not messages (updateItem already calls getCartItems which handles cleanup)
+        return result.items || result;
     } catch (error) {
         console.error("Failed to update cart item:", error);
         throw error;
@@ -105,8 +111,9 @@ export const updateItem = async (userId, productId, quantity) => {
  */
 export const removeItem = async (userId, productId) => {
     try {
-        const items = await cartRepository.removeItem(userId, productId);
-        return items;
+        const result = await cartRepository.removeItem(userId, productId);
+        // Return only items, not messages (removeItem already calls getCartItems which handles cleanup)
+        return result.items || result;
     } catch (error) {
         console.error("Failed to remove cart item:", error);
         throw error;

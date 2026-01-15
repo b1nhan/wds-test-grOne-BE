@@ -1,5 +1,7 @@
 import * as orderRepository from "../repository/order.repository.js";
 import * as cartRepository from "../repository/cart.repository.js";
+import * as productRepository from "../repository/product.repository.js";
+import * as userRepository from "../repository/user.repository.js";
 import { prisma } from "../config/prisma.js";
 
 /**
@@ -10,8 +12,9 @@ import { prisma } from "../config/prisma.js";
  */
 export const create = async (userId, phone) => {
     try {
-        // Get cart items
-        const cartItems = await cartRepository.getCartItems(userId);
+        // Get cart items (returns { items, removedProducts })
+        const cartResult = await cartRepository.getCartItems(userId);
+        const cartItems = cartResult.items || [];
 
         // Validate cart is not empty
         if (!cartItems || cartItems.length === 0) {
@@ -20,19 +23,15 @@ export const create = async (userId, phone) => {
 
         // Use transaction to ensure atomicity
         const order = await prisma.$transaction(async (tx) => {
-            // Fetch all products from cart
+            // Fetch all products from cart (only active/visible products - status = 1)
             const productIds = cartItems.map(item => Number(item.productId));
-            const products = await tx.product.findMany({
-                where: {
-                    id: { in: productIds }
-                }
-            });
+            const products = await productRepository.findManyByIds(productIds, tx);
 
-            // Check if all products exist
+            // Check if all products exist and are active
             if (products.length !== productIds.length) {
                 const foundIds = products.map(p => p.id);
                 const missingIds = productIds.filter(id => !foundIds.includes(id));
-                throw new Error(`Products not found: ${missingIds.join(", ")}`);
+                throw new Error(`Một hoặc nhiều sản phẩm không còn khả dụng hoặc đã bị xóa: ${missingIds.join(", ")}`);
             }
 
             // Validate stock and prepare order details
@@ -64,38 +63,20 @@ export const create = async (userId, phone) => {
                 });
             }
 
-            // Create order with details
-            const newOrder = await tx.order.create({
-                data: {
-                    userId: Number(userId),
-                    total: orderTotal,
-                    details: {
-                        create: orderDetails
-                    }
-                },
-                include: {
-                    details: {
-                        include: {
-                            product: true
-                        }
-                    }
-                }
-            });
+            // Create order with details using repository
+            const orderData = {
+                userId: Number(userId),
+                total: orderTotal,
+                details: orderDetails
+            };
+            const newOrder = await orderRepository.create(orderData, tx);
 
-            // Update product quantities
+            // Update product quantities using repository
             for (const cartItem of cartItems) {
-                const product = products.find(p => p.id === Number(cartItem.productId));
-                await tx.product.update({
-                    where: { id: product.id },
-                    data: {
-                        quantity: {
-                            decrement: cartItem.quantity
-                        }
-                    }
-                });
+                await productRepository.updateQuantity(cartItem.productId, cartItem.quantity, tx);
             }
 
-            // Update user's moneySpent and phone (if provided)
+            // Update user's moneySpent and phone using repository
             const updateData = {
                 moneySpent: {
                     increment: orderTotal
@@ -107,21 +88,10 @@ export const create = async (userId, phone) => {
                 updateData.phone = phone;
             }
 
-            await tx.user.update({
-                where: { id: Number(userId) },
-                data: updateData
-            });
+            await userRepository.update(userId, updateData, tx);
 
-            // Clear cart after order is created
-            const cart = await tx.cart.findFirst({
-                where: { userId: Number(userId) }
-            });
-
-            if (cart) {
-                await tx.cartItem.deleteMany({
-                    where: { cartId: cart.id }
-                });
-            }
+            // Clear cart after order is created using repository
+            await cartRepository.clearCartItems(userId, tx);
 
             return newOrder;
         });

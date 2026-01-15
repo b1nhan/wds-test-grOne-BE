@@ -45,12 +45,47 @@ export const getOrCreateCart = async (userId) => {
 /**
  * Get cart items for user
  * @param {Number} userId - User ID
- * @returns {Array} Cart items with products
+ * @returns {Object} { items: Array, removedProducts: Array } - Cart items with visible products and messages about removed products
  */
 export const getCartItems = async (userId) => {
     try {
         const cart = await getOrCreateCart(userId);
-        return cart.items || [];
+        
+        if (!cart || !cart.items || cart.items.length === 0) {
+            return { items: [], removedProducts: [] };
+        }
+
+        // Filter out items with hidden/inactive/deleted products and remove them from cart
+        const activeItems = [];
+        const itemsToRemove = [];
+        const removedProducts = []; // Store product names that were removed
+
+        for (const item of cart.items) {
+            // Check if product exists and is active/visible (status = 1)
+            // If product is null (hard deleted) or status !== 1, remove from cart
+            if (item.product && item.product.status === 1) {
+                activeItems.push(item);
+            } else {
+                // Mark for removal if product is hidden (status = 0), deleted (status = -1), inactive, or doesn't exist
+                itemsToRemove.push(item.id);
+                
+                // Store product name for message if product exists
+                if (item.product && item.product.name) {
+                    removedProducts.push(item.product.name);
+                }
+            }
+        }
+
+        // Remove hidden/inactive/deleted product items from cart
+        if (itemsToRemove.length > 0) {
+            await prisma.cartItem.deleteMany({
+                where: {
+                    id: { in: itemsToRemove }
+                }
+            });
+        }
+
+        return { items: activeItems, removedProducts };
     } catch (error) {
         console.error("Database error getting cart items:", error);
         throw error;
@@ -69,12 +104,7 @@ export const addItem = async (userId, productId, quantity) => {
         const cart = await getOrCreateCart(userId);
 
         // Check if item already exists
-        const existingItem = await prisma.cartItem.findFirst({
-            where: {
-                cartId: cart.id,
-                productId: Number(productId)
-            }
-        });
+        const existingItem = await findCartItem(cart.id, productId);
 
         if (existingItem) {
             // Update quantity (add to existing)
@@ -95,8 +125,9 @@ export const addItem = async (userId, productId, quantity) => {
             });
         }
 
-        // Return updated cart items
-        return await getCartItems(userId);
+        // Return updated cart items (getCartItems returns { items, removedProducts })
+        const result = await getCartItems(userId);
+        return result.items; // For addItem, updateItem, removeItem, we only return items
     } catch (error) {
         console.error("Database error adding cart item:", error);
         throw error;
@@ -114,12 +145,7 @@ export const updateItem = async (userId, productId, quantity) => {
     try {
         const cart = await getOrCreateCart(userId);
 
-        const item = await prisma.cartItem.findFirst({
-            where: {
-                cartId: cart.id,
-                productId: Number(productId)
-            }
-        });
+        const item = await findCartItem(cart.id, productId);
 
         if (!item) {
             throw new Error("Item not found in cart");
@@ -132,8 +158,9 @@ export const updateItem = async (userId, productId, quantity) => {
             }
         });
 
-        // Return updated cart items
-        return await getCartItems(userId);
+        // Return updated cart items (getCartItems returns { items, removedProducts })
+        const result = await getCartItems(userId);
+        return result.items; // For addItem, updateItem, removeItem, we only return items
     } catch (error) {
         console.error("Database error updating cart item:", error);
         throw error;
@@ -150,12 +177,7 @@ export const removeItem = async (userId, productId) => {
     try {
         const cart = await getOrCreateCart(userId);
 
-        const item = await prisma.cartItem.findFirst({
-            where: {
-                cartId: cart.id,
-                productId: Number(productId)
-            }
-        });
+        const item = await findCartItem(cart.id, productId);
 
         if (!item) {
             throw new Error("Item not found in cart");
@@ -165,10 +187,54 @@ export const removeItem = async (userId, productId) => {
             where: { id: item.id }
         });
 
-        // Return updated cart items
-        return await getCartItems(userId);
+        // Return updated cart items (getCartItems returns { items, removedProducts })
+        const result = await getCartItems(userId);
+        return result.items; // For addItem, updateItem, removeItem, we only return items
     } catch (error) {
         console.error("Database error removing cart item:", error);
+        throw error;
+    }
+};
+
+/**
+ * Find cart item by cartId and productId
+ * @param {Number} cartId - Cart ID
+ * @param {Number} productId - Product ID
+ * @returns {Object|null} Cart item or null if not found
+ */
+export const findCartItem = async (cartId, productId) => {
+    try {
+        return await prisma.cartItem.findFirst({
+            where: {
+                cartId: Number(cartId),
+                productId: Number(productId)
+            }
+        });
+    } catch (error) {
+        console.error("Database error finding cart item:", error);
+        throw error;
+    }
+};
+
+/**
+ * Clear cart items (for transaction use)
+ * @param {Number} userId - User ID
+ * @param {Object} tx - Prisma transaction client (optional)
+ */
+export const clearCartItems = async (userId, tx = null) => {
+    const client = tx || prisma;
+    try {
+        const cart = await client.cart.findFirst({
+            where: { userId: Number(userId) }
+        });
+
+        if (cart) {
+            await client.cartItem.deleteMany({
+                where: { cartId: cart.id }
+            });
+        }
+    } catch (error) {
+        console.error("Database error clearing cart:", error);
         throw error;
     }
 };
@@ -178,18 +244,5 @@ export const removeItem = async (userId, productId) => {
  * @param {Number} userId - User ID
  */
 export const clearCart = async (userId) => {
-    try {
-        const cart = await prisma.cart.findFirst({
-            where: { userId: Number(userId) }
-        });
-
-        if (cart) {
-            await prisma.cartItem.deleteMany({
-                where: { cartId: cart.id }
-            });
-        }
-    } catch (error) {
-        console.error("Database error clearing cart:", error);
-        throw error;
-    }
+    return await clearCartItems(userId);
 };

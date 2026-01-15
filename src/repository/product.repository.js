@@ -1,16 +1,36 @@
 import { prisma } from "../config/prisma.js";
 
 export const getAll = async () => {
-    return await prisma.product.findMany();
+    return await prisma.product.findMany({
+        where: { 
+            status: 1 // Only active products (status = 1 means visible)
+        }
+    });
 };
 
 /**
- * Find one product with the required `id`
+ * Find one product with the required `id` (only active products)
  * @param {Number} id
  */
 export const getOne = async (id) => {
+    return await prisma.product.findFirst({
+        where: { 
+            id: Number(id),
+            status: 1 // Only active products (status = 1 means visible)
+        },
+    });
+};
+
+/**
+ * Find one product by ID (including hidden/deleted products - for admin use)
+ * @param {Number} id
+ * @returns {Object|null} Product or null if not found
+ */
+export const getOneById = async (id) => {
     return await prisma.product.findUnique({
-        where: { id: Number(id) },
+        where: { 
+            id: Number(id)
+        },
     });
 };
 
@@ -30,7 +50,9 @@ export const searchWithFilter = async (options = {}) => {
             page = 1
         } = options;
 
-        const conditions = [];
+        const conditions = [
+            { status: 1 } // Only active products (status = 1 means visible)
+        ];
 
         // Search by keyword (MySQL doesn't support case-insensitive mode, use contains)
         if (keyword && keyword.trim() !== "") {
@@ -76,12 +98,12 @@ export const searchWithFilter = async (options = {}) => {
 
         // Get total count for pagination
         const totalItems = await prisma.product.count({
-            where: conditions.length > 0 ? { AND: conditions } : {},
+            where: { AND: conditions },
         });
 
         // Get products with pagination
         const items = await prisma.product.findMany({
-            where: conditions.length > 0 ? { AND: conditions } : {},
+            where: { AND: conditions },
             skip,
             take,
             orderBy,
@@ -128,8 +150,15 @@ export const getAllWithPagination = async (options = {}) => {
                 break;
         }
 
-        const totalItems = await prisma.product.count();
+        const totalItems = await prisma.product.count({
+            where: { 
+                status: 1 // Only active products (status = 1 means visible)
+            }
+        });
         const items = await prisma.product.findMany({
+            where: { 
+                status: 1 // Only active products (status = 1 means visible)
+            },
             skip,
             take,
             orderBy,
@@ -159,7 +188,44 @@ export const update = async (id, data) => {
 };
 
 export const remove = async (id) => {
-    return await prisma.product.delete({
+    // Soft delete: set status to 0 (ẩn) instead of hard delete
+    return await prisma.product.update({
         where: { id: Number(id) },
+        data: { status: 0 }, // Hide product (status = 0 means inactive/hidden)
+    });
+};
+
+/**
+ * Find multiple products by IDs (for transaction use)
+ * @param {Array} productIds - Array of product IDs
+ * @param {Object} tx - Prisma transaction client (optional)
+ * @returns {Array} Products array
+ */
+export const findManyByIds = async (productIds, tx = null) => {
+    const client = tx || prisma;
+    return await client.product.findMany({
+        where: {
+            id: { in: productIds.map(id => Number(id)) },
+            status: 1 // Only active products (status = 1 means visible)
+        }
+    });
+};
+
+/**
+ * Update product quantity (for transaction use)
+ * @param {Number} productId - Product ID
+ * @param {Number} quantity - Quantity to decrement
+ * @param {Object} tx - Prisma transaction client (optional)
+ * @returns {Object} Updated product
+ */
+export const updateQuantity = async (productId, quantity, tx = null) => {
+    const client = tx || prisma;
+    return await client.product.update({
+        where: { id: Number(productId) },
+        data: {
+            quantity: {
+                decrement: Number(quantity)
+            }
+        }
     });
 };

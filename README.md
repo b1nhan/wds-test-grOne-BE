@@ -2,6 +2,8 @@
 
 Hệ thống Backend cho dự án website thương mại điện tử mô phỏng Shop Giày online. Dự án được xây dựng trên nền tảng Node.js với Framework Hono, sử dụng kiến trúc phân lớp rõ ràng để đảm bảo khả năng mở rộng và bảo trì.
 
+> Đây là Repository cho Backend. Xem Repository Frontend tại đây: https://github.com/b1nhan/wds-test-grOne-FE
+
 ## 📖 Giới thiệu dự án
 
 Hệ thống cung cấp đầy đủ các API phục vụ cho một trang thương mại điện tử:

@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { ConflictException } from "../exceptions/ConflictException.js";
 
 export const getOne = async (criteria, value) => {
     if (!['id', 'email'].includes(criteria)) {
@@ -40,8 +41,16 @@ export const create = async (user) => {
 
         return newUser.id;
     } catch (err) {
-        console.log ("Error:", err);
-        throw new Error("Cannot create new user. Please try again.");
+        console.error("Error:", err);
+
+        if (err instanceof Prisma.PrismaClientKnownRequestError) {
+            if (err.code === "P2002") {
+                throw new ConflictException("Email already exists.");
+            }
+        }
+
+        // 2. Các lỗi khác không xác định -> Lúc này mới Masking lại để bảo mật
+        throw new Error("Database error during user creation.");
     }
 }
 

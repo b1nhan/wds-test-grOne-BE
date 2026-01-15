@@ -5,7 +5,8 @@ import jwt from "jsonwebtoken";
 import { UnauthorizedException } from "../exceptions/UnauthorizedExeption.js";
 
 export class JwtHandler {
-    static encrAlgos = ["HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "ES256", "ES384", "none"];
+    // static encrAlgos = ["HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "ES256", "ES384", "none"];
+    static encrAlgos = ["HS512"];
 
     static getSecretKey() {
         const key = process.env.JWT_SECRET_KEY;

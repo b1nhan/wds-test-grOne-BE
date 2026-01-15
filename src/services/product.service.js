@@ -121,8 +121,8 @@ export const update = async (id, data) => {
             throw new Error("Invalid product ID");
         }
 
-        // Check if product exists
-        const existing = await productRepository.getOne(Number(id));
+        // Check if product exists (including hidden/deleted products for admin update)
+        const existing = await productRepository.getOneById(Number(id));
         if (!existing) {
             throw new Error("Product not found");
         }
@@ -144,7 +144,7 @@ export const update = async (id, data) => {
 };
 
 /**
- * Delete product by ID
+ * Delete product by ID (soft delete - set status = 0)
  * @param {Number} id - Product ID
  * @returns {Object} Deleted product
  */
@@ -154,8 +154,8 @@ export const remove = async (id) => {
             throw new Error("Invalid product ID");
         }
 
-        // Check if product exists
-        const existing = await productRepository.getOne(Number(id));
+        // Check if product exists (including hidden/deleted products)
+        const existing = await productRepository.getOneById(Number(id));
         if (!existing) {
             throw new Error("Product not found");
         }

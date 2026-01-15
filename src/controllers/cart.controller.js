@@ -16,12 +16,15 @@ export const getCart = async (c) => {
             }, 401);
         }
 
-        const items = await cartService.getCartItems(user.id);
+        const result = await cartService.getCartItems(user.id);
 
         return c.json({
             success: true,
             message: "Lấy thông tin giỏ hàng thành công",
-            data: mapCartItemsToResponse(items)
+            data: {
+                items: mapCartItemsToResponse(result.items || result),
+                messages: result.messages || []
+            }
         }, 200);
     } catch (error) {
         console.error("Error in getCart:", error);

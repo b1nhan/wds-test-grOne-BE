@@ -45,6 +45,19 @@ export const create = async (user) => {
     }
 }
 
+export const update = async (userId, data, tx = null) => {
+    const client = tx || prisma;
+    try {
+        return await client.user.update({
+            where: { id: Number(userId) },
+            data
+        });
+    } catch (err) {
+        console.error("Database error during user update:", err);
+        throw new Error("Database error during user update.");
+    }
+};
+
 // export const updateLastLogin = async (id) => {
 //     try {
 //         await prisma.user.update({

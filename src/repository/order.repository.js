@@ -3,46 +3,43 @@ import { prisma } from "../config/prisma.js";
 /**
  * Create a new order with order details
  * @param {Object} orderData - { userId, total, details: [{ productId, quantity, priceSnapshot, total }] }
+ * @param {Object} tx - Prisma transaction client (optional)
  * @returns {Promise<any>} Created order with details
  */
-export const create = async (orderData) => {
+export const create = async (orderData, tx = null) => {
+    const client = tx || prisma;
     try {
         const { userId, total, details } = orderData;
 
-        // Use transaction to ensure data consistency
-        const order = await prisma.$transaction(async (tx) => {
-            // Create order
-            const newOrder = await tx.order.create({
-                data: {
-                    userId,
-                    total: parseFloat(total),
-                    details: {
-                        create: details.map(detail => ({
-                            productId: detail.productId,
-                            quantity: detail.quantity,
-                            priceSnapshot: parseFloat(detail.priceSnapshot),
-                            total: parseFloat(detail.total),
-                        }))
+        // Create order
+        const newOrder = await client.order.create({
+            data: {
+                userId,
+                total: parseFloat(total),
+                details: {
+                    create: details.map(detail => ({
+                        productId: detail.productId,
+                        quantity: detail.quantity,
+                        priceSnapshot: parseFloat(detail.priceSnapshot),
+                        total: parseFloat(detail.total),
+                    }))
+                }
+            },
+            include: {
+                user: {
+                    select: {
+                        phone: true
                     }
                 },
-                include: {
-                    user: {
-                        select: {
-                            phone: true
-                        }
-                    },
-                    details: {
-                        include: {
-                            product: true
-                        }
+                details: {
+                    include: {
+                        product: true
                     }
                 }
-            });
-
-            return newOrder;
+            }
         });
 
-        return order;
+        return newOrder;
     } catch (error) {
         console.error("Database error creating order:", error);
         throw error;

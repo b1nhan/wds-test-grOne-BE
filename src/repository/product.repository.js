@@ -1,11 +1,11 @@
 import { prisma } from "../config/prisma.js";
 
 export const getAll = async () => {
-    return await prisma.product.findMany({
-        where: { 
-            status: 1 // Only active products (status = 1 means visible)
-        }
-    });
+  return await prisma.product.findMany({
+    where: {
+      status: "ACTIVE",
+    },
+  });
 };
 
 /**
@@ -13,12 +13,12 @@ export const getAll = async () => {
  * @param {Number} id
  */
 export const getOne = async (id) => {
-    return await prisma.product.findFirst({
-        where: { 
-            id: Number(id),
-            status: 1 // Only active products (status = 1 means visible)
-        },
-    });
+  return await prisma.product.findFirst({
+    where: {
+      id: Number(id),
+      status: "ACTIVE",
+    },
+  });
 };
 
 /**
@@ -27,11 +27,11 @@ export const getOne = async (id) => {
  * @returns {Object|null} Product or null if not found
  */
 export const getOneById = async (id) => {
-    return await prisma.product.findUnique({
-        where: { 
-            id: Number(id)
-        },
-    });
+  return await prisma.product.findUnique({
+    where: {
+      id: Number(id),
+    },
+  });
 };
 
 /**
@@ -40,84 +40,80 @@ export const getOneById = async (id) => {
  * @returns {Object} { items, totalItems }
  */
 export const searchWithFilter = async (options = {}) => {
-    try {
-        const {
-            keyword,
-            minPrice,
-            maxPrice,
-            sort = "newest",
-            limit = 10,
-            page = 1
-        } = options;
+  try {
+    const {
+      keyword,
+      minPrice,
+      maxPrice,
+      sort = "newest",
+      limit = 10,
+      page = 1,
+    } = options;
 
-        const conditions = [
-            { status: 1 } // Only active products (status = 1 means visible)
-        ];
+    const conditions = [{ status: "ACTIVE" }];
 
-        // Search by keyword (MySQL doesn't support case-insensitive mode, use contains)
-        if (keyword && keyword.trim() !== "") {
-            conditions.push({
-                OR: [
-                    { name: { contains: keyword.trim() } },
-                ]
-            });
-        }
-
-        // Filter by price range
-        if (minPrice !== undefined || maxPrice !== undefined) {
-            const priceCondition = {};
-
-            if (minPrice !== undefined) {
-                priceCondition.gte = parseFloat(minPrice);
-            }
-            if (maxPrice !== undefined) {
-                priceCondition.lte = parseFloat(maxPrice);
-            }
-
-            conditions.push({ price: priceCondition });
-        }
-
-        // Calculate pagination
-        const skip = (parseInt(page) - 1) * parseInt(limit);
-        const take = parseInt(limit);
-
-        // Build orderBy based on sort parameter
-        let orderBy = {};
-        switch (sort) {
-            case "price_asc":
-                orderBy = { price: "asc" };
-                break;
-            case "price_desc":
-                orderBy = { price: "desc" };
-                break;
-            case "newest":
-            default:
-                orderBy = { createdAt: "desc" };
-                break;
-        }
-
-        // Get total count for pagination
-        const totalItems = await prisma.product.count({
-            where: { AND: conditions },
-        });
-
-        // Get products with pagination
-        const items = await prisma.product.findMany({
-            where: { AND: conditions },
-            skip,
-            take,
-            orderBy,
-        });
-
-        return {
-            items,
-            totalItems,
-        };
-    } catch (error) {
-        console.error("Database search error:", error);
-        throw new Error("Internal Server Error");
+    // Search by keyword (MySQL doesn't support case-insensitive mode, use contains)
+    if (keyword && keyword.trim() !== "") {
+      conditions.push({
+        OR: [{ name: { contains: keyword.trim() } }],
+      });
     }
-}
+
+    // Filter by price range
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      const priceCondition = {};
+
+      if (minPrice !== undefined) {
+        priceCondition.gte = parseFloat(minPrice);
+      }
+      if (maxPrice !== undefined) {
+        priceCondition.lte = parseFloat(maxPrice);
+      }
+
+      conditions.push({ price: priceCondition });
+    }
+
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit);
+
+    // Build orderBy based on sort parameter
+    let orderBy = {};
+    switch (sort) {
+      case "price_asc":
+        orderBy = { price: "asc" };
+        break;
+      case "price_desc":
+        orderBy = { price: "desc" };
+        break;
+      case "newest":
+      default:
+        orderBy = { createdAt: "desc" };
+        break;
+    }
+
+    // Get total count for pagination
+    const totalItems = await prisma.product.count({
+      where: { AND: conditions },
+    });
+
+    // Get products with pagination
+    const items = await prisma.product.findMany({
+      where: { AND: conditions },
+      skip,
+      take,
+      orderBy,
+    });
+
+    return {
+      items,
+      totalItems,
+    };
+  } catch (error) {
+    console.error("Database search error:", error);
+    throw new Error("Internal Server Error");
+  }
+};
 
 /**
  * Get all products with pagination and sorting
@@ -125,74 +121,69 @@ export const searchWithFilter = async (options = {}) => {
  * @returns {Object} { items, totalItems }
  */
 export const getAllWithPagination = async (options = {}) => {
-    try {
-        const {
-            sort = "newest",
-            limit = 10,
-            page = 1
-        } = options;
+  try {
+    const { sort = "newest", limit = 10, page = 1 } = options;
 
-        const skip = (parseInt(page) - 1) * parseInt(limit);
-        const take = parseInt(limit);
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit);
 
-        // Build orderBy
-        let orderBy = {};
-        switch (sort) {
-            case "price_asc":
-                orderBy = { price: "asc" };
-                break;
-            case "price_desc":
-                orderBy = { price: "desc" };
-                break;
-            case "newest":
-            default:
-                orderBy = { createdAt: "desc" };
-                break;
-        }
-
-        const totalItems = await prisma.product.count({
-            where: { 
-                status: 1 // Only active products (status = 1 means visible)
-            }
-        });
-        const items = await prisma.product.findMany({
-            where: { 
-                status: 1 // Only active products (status = 1 means visible)
-            },
-            skip,
-            take,
-            orderBy,
-        });
-
-        return {
-            items,
-            totalItems,
-        };
-    } catch (error) {
-        console.error("Database get all error:", error);
-        throw new Error("Internal Server Error");
+    // Build orderBy
+    let orderBy = {};
+    switch (sort) {
+      case "price_asc":
+        orderBy = { price: "asc" };
+        break;
+      case "price_desc":
+        orderBy = { price: "desc" };
+        break;
+      case "newest":
+      default:
+        orderBy = { createdAt: "desc" };
+        break;
     }
-}
+
+    const totalItems = await prisma.product.count({
+      where: {
+        status: "ACTIVE",
+      },
+    });
+    const items = await prisma.product.findMany({
+      where: {
+        status: "ACTIVE",
+      },
+      skip,
+      take,
+      orderBy,
+    });
+
+    return {
+      items,
+      totalItems,
+    };
+  } catch (error) {
+    console.error("Database get all error:", error);
+    throw new Error("Internal Server Error");
+  }
+};
 
 export const create = async (data) => {
-    return await prisma.product.create({
-        data,
-    });
+  return await prisma.product.create({
+    data,
+  });
 };
 
 export const update = async (id, data) => {
-    return await prisma.product.update({
-        where: { id: Number(id) },
-        data,
-    });
+  return await prisma.product.update({
+    where: { id: Number(id) },
+    data,
+  });
 };
 
 export const remove = async (id) => {
-    // Soft delete: set status to 0 (ẩn) instead of hard delete
-    return await prisma.product.update({
-        where: { id: Number(id) },
-        data: { status: 0 }, // Hide product (status = 0 means inactive/hidden)
-    });
+  return await prisma.product.update({
+    where: { id: Number(id) },
+    data: { status: "INACTIVE" },
+  });
 };
 
 /**
@@ -202,13 +193,13 @@ export const remove = async (id) => {
  * @returns {Array} Products array
  */
 export const findManyByIds = async (productIds, tx = null) => {
-    const client = tx || prisma;
-    return await client.product.findMany({
-        where: {
-            id: { in: productIds.map(id => Number(id)) },
-            status: 1 // Only active products (status = 1 means visible)
-        }
-    });
+  const client = tx || prisma;
+  return await client.product.findMany({
+    where: {
+      id: { in: productIds.map((id) => Number(id)) },
+      status: "ACTIVE",
+    },
+  });
 };
 
 /**
@@ -219,13 +210,13 @@ export const findManyByIds = async (productIds, tx = null) => {
  * @returns {Object} Updated product
  */
 export const updateQuantity = async (productId, quantity, tx = null) => {
-    const client = tx || prisma;
-    return await client.product.update({
-        where: { id: Number(productId) },
-        data: {
-            quantity: {
-                decrement: Number(quantity)
-            }
-        }
-    });
+  const client = tx || prisma;
+  return await client.product.update({
+    where: { id: Number(productId) },
+    data: {
+      quantity: {
+        decrement: Number(quantity),
+      },
+    },
+  });
 };

@@ -6,7 +6,7 @@ export const login = async (email, password) => {
   const user = await userRepository.getOne("email", email);
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    throw new BadRequestException("Invalid credentials.");
+    throw new BadRequestException("Sai tài khoản hoặc mật khẩu!");
   }
 
   // Fire and forget
@@ -22,7 +22,7 @@ export const login = async (email, password) => {
 export const register = async (fullName, email, password, phone) => {
   const existingUser = await userRepository.getOne("email", email);
   if (existingUser) {
-    throw new BadRequestException("User already exists.");
+    throw new BadRequestException("Địa chỉ email đã tồn tại!");
   }
 
   const hashedPassword = bcrypt.hashSync(password, 13);

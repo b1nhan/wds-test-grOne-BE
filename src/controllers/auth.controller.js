@@ -11,7 +11,14 @@ export const login = async (c) => {
     const validation = LoginRequestDTO.safeParse(body);
 
     if (!validation.success) {
-      return c.json(z.treeifyError(validation.error), 400);
+      return c.json(
+        {
+          success: false,
+          message: validation.error.issues[0].message,
+          statusCode: 400,
+        },
+        400
+      );
     }
 
     const { email, password, rememberMe } = validation.data;
@@ -46,8 +53,6 @@ export const login = async (c) => {
       200
     );
   } catch (error) {
-    console.error(error);
-
     const message = error.message || "Internal server error.";
 
     return c.json(
@@ -67,7 +72,14 @@ export const register = async (c) => {
     const validation = RegisterRequestDTO.safeParse(body);
 
     if (!validation.success) {
-      return c.json(z.treeifyError(validation.error), 400);
+      return c.json(
+        {
+          success: false,
+          message: validation.error.issues[0].message,
+          statusCode: 400,
+        },
+        400
+      );
     }
 
     const { full_name, email, password, phone } = validation.data;
